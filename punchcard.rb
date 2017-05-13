@@ -111,13 +111,22 @@ class PunchCard
     end
   end
 
+  def rename new_project_name
+    old_filename = project_filename
+    data = project_data
+    data[0] = new_project_name
+    write_string_to_project_file! data.join("\n")
+    self.project = new_project_name
+    File.rename(old_filename, project_filename) && "#{old_filename} -> #{project_filename}"
+  end
+
   def project= project_name
     @project = project_name
     if @project.end_with?('*')
       @wilcard_for_filename = "*"
       @project = @project.chomp("*")
     end
-    @project = project_data.first if project_exist?
+    @project.strip
   end
 
   def project
