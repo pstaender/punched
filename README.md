@@ -14,15 +14,6 @@
   $ gem install punched
 ```
 
-Or choose your preferred filename and location:
-
-```sh
-  $ echo '#!/usr/bin/env ruby' > /usr/local/bin/punched
-  $ curl https://raw.githubusercontent.com/pstaender/punchcard/master/lib/punchcard.rb >> /usr/local/bin/punched
-  $ curl https://raw.githubusercontent.com/pstaender/punchcard/master/bin/punched >> /usr/local/bin/punched
-  $ chmod +x /usr/local/bin/punched
-```
-
 ### Usage
 
 #### Start Project
