@@ -1,5 +1,6 @@
+$:.push File.expand_path("../lib", __FILE__)
 
-require './punchcard.rb'
+require "punchcard"
 require 'securerandom'
 
 def example_settings_dir
@@ -7,7 +8,7 @@ def example_settings_dir
 end
 
 def setup_example_settings_dir
-  Dir.glob(example_settings_dir+'/*').each { |file| File.delete(file)}
+  Dir.glob(example_settings_dir+'/*').each { |file| File.delete(file) }
   PunchCard.send(:remove_const, :SETTINGS_DIR)
   PunchCard.const_set(:SETTINGS_DIR, example_settings_dir)
 end
@@ -61,11 +62,11 @@ describe PunchCard do
   end
 
   it 'should calculate tracked total time' do
-    project = two_seconds_tracking
+    project      = two_seconds_tracking
     tracked_time = project.details.lines.last.match(/^\d{2}\:\d{2}\:(\d{2}).*total/)[1].to_i
     expect(tracked_time).to be > 0
     expect(tracked_time).to be < 4
-    project = two_seconds_tracking
+    project      = two_seconds_tracking
     tracked_time = project.details.lines.last.match(/^\d{2}\:\d{2}\:(\d{2}).*total/)[1].to_i
     expect(tracked_time).to be > 2
     expect(tracked_time).to be < 6
@@ -81,7 +82,7 @@ describe PunchCard do
     expect(my_project_file.lines.last).to match(/^\d+/)
     expect(my_project_file.lines[-2]).to match(/^\d+/)
   end
-  
+
   it 'should read and write utf8 names' do
     PunchCard.new "Playing Motörhead"
     expect(my_project_file('playing_mot_rhead').strip).to eq("Playing Motörhead")
@@ -122,13 +123,36 @@ describe PunchCard do
 
   it 'should load latest project by wildcard' do
     project_a = random_project
-    project = PunchCard.new "My random*"
+    project   = PunchCard.new "My random*"
     expect(project.project).to eq(project_a.project)
     sleep 1
     project_b = random_project
-    project = PunchCard.new "My random*"
+    project   = PunchCard.new "My random*"
     expect(project.project).to eq(project_b.project)
     expect(project.project).not_to eq(project_a.project)
+  end
+
+  it 'should rename' do
+    project = example_project
+    content = my_project_file
+    project.rename 'Renamed Project'
+    expect(File.open("#{example_settings_dir}/renamed_project", "r").read.strip).to eq(content.strip.sub(/My Project/, 'Renamed Project'))
+    expect(File.exists?("#{example_settings_dir}/my_project")).to be_falsey
+    expect(project.project).to eq('Renamed Project')
+    project.start
+    sleep 0.1
+    project.stop
+    content = File.open("#{example_settings_dir}/renamed_project", "r").read.strip
+    project.rename 'Other Project'
+    expect(File.open("#{example_settings_dir}/other_project", "r").read.strip).to eq(content.strip.sub(/Renamed Project/, 'Other Project'))
+    expect(File.exists?("#{example_settings_dir}/renamed_project")).to be_falsey
+  end
+
+  it 'should remove' do
+    project = example_project
+    expect(File.exists?("#{example_settings_dir}/my_project")).to be_truthy
+    project.remove
+    expect(File.exists?("#{example_settings_dir}/my_project")).to be_falsey
   end
 
 end

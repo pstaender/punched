@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+
+#
+# CLI Wrapper
+#
+
+def available_actions
+  PunchCard.new(nil).public_methods(false).reject { |item| item.to_s.end_with?('=') }.sort
+end
+
+def action_available? action
+  available_actions.include? action.to_sym
+end
+
+def exit_with_error! msg
+  STDERR.puts msg
+  exit 1
+end
+
+def usage
+  "Usage: #{File.basename(__FILE__)} 'Name of my project' [#{available_actions.join('|')}]"
+end
+
+def all action
+  puts('"project","status","last active on","total duration","hourly rate","earnings"') if action == 'csv'
+  Dir[PunchCard::SETTINGS_DIR+'/*'].sort_by { |f| File.mtime(f) }.reverse.each do |file|
+    puts `ruby #{__FILE__} #{action} '#{File.basename(file)}'`
+  end
+end
+
+if ARGV.first == 'all'
+  all ARGV[1] ? ARGV[1] : 'csv'
+  exit
+elsif ARGV.first && ['-h', '--help', 'help'].include?(ARGV.first)
+  puts usage
+  exit
+end
+
+selected_action = ARGV[0]
+project_name    = ARGV[1]
+
+if selected_action
+  if action_available?(selected_action)
+    exit_with_error!("2nd argument has to be the project name, e.g.:\n#{usage}") if !project_name && selected_action != 'list'
+    punch_card = PunchCard.new project_name
+    begin
+      arguments = ARGV.drop(2)
+      if arguments.size > 0
+        puts punch_card.send(selected_action.to_s, *arguments)
+      else
+        puts punch_card.send(selected_action.to_s)
+      end
+    rescue PunchCardError => e
+      exit_with_error! "Error: #{e.message}"
+    end
+  else
+    exit_with_error! "Unrecognized action '#{selected_action || ''}'\n#{usage}"
+  end
+end

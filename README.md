@@ -6,15 +6,20 @@
 ### Requirements
 
   * ruby 2+
-  * bash (maybe windows works, too?)
+  * unix bash (maybe windows works as well?!?)
 
 ### Install
 
-Choose your preferred filename and location:
+```sh
+  $ gem install punched
+```
+
+Or choose your preferred filename and location:
 
 ```sh
-  $ curl https://raw.githubusercontent.com/pstaender/punchcard/master/punchcard.rb > /usr/local/bin/punch
-  $ chmod +x /usr/local/bin/punch
+  $ curl https://raw.githubusercontent.com/pstaender/punchcard/master/lib/punchcard.rb > /usr/local/bin/punched
+  $ curl https://raw.githubusercontent.com/pstaender/punchcard/master/bin/punched >> /usr/local/bin/punched
+  $ chmod +x /usr/local/bin/punched
 ```
 
 ### Usage
@@ -22,7 +27,7 @@ Choose your preferred filename and location:
 #### Start Project
 
 ```sh
-  $ punch start "Punchcard (programming)"
+  $ punched start "Punchcard (programming)"
 ```
 
 #### Wildcard
@@ -30,13 +35,13 @@ Choose your preferred filename and location:
 Save keystrokes by using wildcard. The last active project, which matches the pattern (case insensitive) will be selected:
 
 ```sh
-  $ punch start "Punch*"
+  $ punched start "Punch*"
 ```
 
 #### Stop Project
 
 ```sh
-  $ punch stop "Punch*"
+  $ punched stop "Punch*"
 ```
 
 #### Toggle
@@ -44,13 +49,13 @@ Save keystrokes by using wildcard. The last active project, which matches the pa
 Toggle between start and stop:
 
 ```sh
-  $ punch toggle "Punch*"
+  $ punched toggle "Punch*"
 ```
 
 #### Status
 
 ```sh
-  $ punch status "Punch*"
+  $ punched status "Punch*"
 
     Punchcard (programming)
     01:10:09
@@ -59,7 +64,7 @@ Toggle between start and stop:
 #### List details
 
 ```sh
-  $ punch details "Punch*"
+  $ punched details "Punch*"
 
     Punchcard (programming) (stopped)
 
@@ -73,31 +78,42 @@ Toggle between start and stop:
 #### Set Hourly Rate
 
 ```sh
-  $ punch set "Punch*" hourlyRate 250€
+  $ punched set "Punch*" hourlyRate 250€
 ```
 
 #### Total time in seconds
 
 ```sh
-  $ punch total "Punch*"
+  $ punched total "Punch*"
 ```
+
+#### Rename and delete Project
+
+```sh
+  $ punched rename "Old Title" "New Title"
+```
+
+```sh
+  $ punched remove "Punchcard (programming)"
+```
+
 
 #### List all projects with total time in CSV format
 
 ```sh
-  $ punch all
+  $ punched all
 
     "project","status","last active on","total duration","hourly rate","earnings"
     "Website","stopped","2017-05-07 15:50:00","04:06:00","250.0 €","1025.00 €"
     "Punchcard (programming)","stopped","2017-07-11 12:47:42","01:10:04","",""
 ```
 
-You can use `all` with any other action as well, e.g. `punch all stop` to stop all running projects
+You can use `all` with any other action as well, e.g. `punched all stop` to stop all running projects.
 
 Hint: Use your favorite output formatter to get a nicer project summary of your choice; e.g. with [csv2md](https://www.npmjs.com/package/csv2md):
 
 ```sh
-  $ punch all | csv2md --pretty
+  $ punched all | csv2md --pretty
 
     | project                   | status  | last active on      | total duration | hourly rate | earnings |
     |---------------------------|---------|---------------------|----------------|-------------|----------|

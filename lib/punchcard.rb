@@ -1,20 +1,21 @@
-#!/usr/bin/env ruby
 # (c) 2017 by philipp staender
 
-class PunchCardError < StandardError; end
+class PunchCardError < StandardError;
+end
 
 class PunchCard
 
-  SETTINGS_DIR = ENV['PUNCHCARD_DIR'] || File.expand_path('~/.punchcard')
+  SETTINGS_DIR        = ENV['PUNCHCARD_DIR'] || File.expand_path('~/.punchcard')
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i
-  TIME_POINT_PATTERN = /^(\d+)((\-)(\d+))*$/
-  META_KEY_PATTERN = /^([a-zA-Z0-9]+)\:\s*(.*)$/
+  TIME_POINT_PATTERN  = /^(\d+)((\-)(\d+))*$/
+  META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/
+  VERSION             = '0.1.0'
 
   attr_accessor :project
 
   def initialize project_name
     @wilcard_for_filename = ''
-    @meta_data = {}
+    @meta_data            = {}
     find_or_make_settings_dir
     if project_name
       self.project = project_name
@@ -74,7 +75,7 @@ class PunchCard
       points = line_to_time_points(line)
       if points
         starttime = points[0]
-        endtime = points[1] || timestamp
+        endtime   = points[1] || timestamp
         output << duration(starttime, endtime) + "\t" + self.class.format_time(Time.at(starttime)) + " - " + self.class.format_time(Time.at(endtime))
       end
     end
@@ -90,17 +91,17 @@ class PunchCard
       points = line_to_time_points(line)
       if points
         starttime = points[0]
-        endtime = points[1] || timestamp
+        endtime   = points[1] || timestamp
         durations.push duration(starttime, endtime)
       end
     end
     '"'+[
-      @project,
-      running_status,
-      self.class.format_time(File.ctime(project_file)),
-      humanized_total,
-      hourly_rate ? hourly_rate[:hourlyRate].to_s + " #{hourly_rate[:currency]}" : '',
-      hourly_rate ? (hourly_rate[:hourlyRate] * total / 3600.0).round(2).to_s + " #{hourly_rate[:currency]}" : '',
+        @project,
+        running_status,
+        self.class.format_time(File.ctime(project_file)),
+        humanized_total,
+        hourly_rate ? hourly_rate[:hourlyRate].to_s + " #{hourly_rate[:currency]}" : '',
+        hourly_rate ? (hourly_rate[:hourlyRate] * total / 3600.0).round(2).to_s + " #{hourly_rate[:currency]}" : '',
     ].join('","') + '"'
   end
 
@@ -113,8 +114,8 @@ class PunchCard
 
   def rename new_project_name
     old_filename = project_filename
-    data = project_data
-    data[0] = new_project_name
+    data         = project_data
+    data[0]      = new_project_name
     write_string_to_project_file! data.join("\n")
     self.project = new_project_name
     File.rename(old_filename, project_filename) && "#{old_filename} -> #{project_filename}"
@@ -124,7 +125,7 @@ class PunchCard
     @project = project_name
     if @project.end_with?('*')
       @wilcard_for_filename = "*"
-      @project = @project.chomp("*")
+      @project              = @project.chomp("*")
     end
     @project.strip
   end
@@ -146,8 +147,8 @@ class PunchCard
       points = line_to_time_points(line)
       if points
         starttime = points[0]
-        endtime = points[1] || timestamp
-        total += endtime - starttime
+        endtime   = points[1] || timestamp
+        total     += endtime - starttime
       end
     end
     total
@@ -163,8 +164,8 @@ class PunchCard
     hourly_rate_found = @meta_data[:hourlyRate] && @meta_data[:hourlyRate].match(HOURLY_RATE_PATTERN)
     if hourly_rate_found
       {
-        hourlyRate: hourly_rate_found[1].to_f,
-        currency: hourly_rate_found[2] ? hourly_rate_found[2].strip : '',
+          hourlyRate: hourly_rate_found[1].to_f,
+          currency:   hourly_rate_found[2] ? hourly_rate_found[2].strip : '',
       }
     else
       nil
@@ -196,7 +197,7 @@ class PunchCard
   end
 
   def humanize_duration duration
-    hours = duration / (60 * 60)
+    hours   = duration / (60 * 60)
     minutes = (duration / 60) % 60
     seconds = duration % 60
     "#{decimal_digits(hours)}:#{decimal_digits(minutes)}:#{decimal_digits(seconds)}"
@@ -244,10 +245,10 @@ class PunchCard
   end
 
   def read_project_data
-    title = nil
-    meta_data = []
+    title      = nil
+    meta_data  = []
     timestamps = []
-    i = 0
+    i          = 0
     File.open(project_file, "r").each_line do |line|
       line.strip!
       if i.zero?
@@ -272,9 +273,9 @@ class PunchCard
   end
 
   def write_to_project_file!
-    timestamps = project_data.select {|line| line.match(/^\d+/) }
-    meta_data_lines = @meta_data.map { |key, value|  "#{key}: #{value}" }
-    write_string_to_project_file! [ @project, meta_data_lines.join("\n"), timestamps ].reject(&:empty?).join("\n")
+    timestamps      = project_data.select { |line| line.match(/^\d+/) }
+    meta_data_lines = @meta_data.map { |key, value| "#{key}: #{value}" }
+    write_string_to_project_file! [@project, meta_data_lines.join("\n"), timestamps].reject(&:empty?).join("\n")
   end
 
   def append_new_line line
@@ -282,13 +283,13 @@ class PunchCard
   end
 
   def replace_last_line line
-    data = project_data
+    data     = project_data
     data[-1] = line
     write_string_to_project_file! data.join("\n")
   end
 
   def project_file
-    Dir[project_filename + @wilcard_for_filename].sort_by{ |f| File.mtime(f) }.reverse.first || project_filename
+    Dir[project_filename + @wilcard_for_filename].sort_by { |f| File.mtime(f) }.reverse.first || project_filename
   end
 
   def project_filename
@@ -300,8 +301,8 @@ class PunchCard
   end
 
   def find_or_make_file
-     write_string_to_project_file!(@project+"\n") unless project_exist?
-     @project = project_data.first
+    write_string_to_project_file!(@project+"\n") unless project_exist?
+    @project = project_data.first
   end
 
   def find_or_make_settings_dir
@@ -312,62 +313,4 @@ class PunchCard
     name.downcase.gsub(/(\\|\/)/, '').gsub(/[^0-9a-z.\-]/, '_')
   end
 
-end
-
-#
-# CLI Wrapper
-#
-
-def available_actions
-  PunchCard.new(nil).public_methods(false).reject { |item| item.to_s.end_with?('=') }.sort
-end
-
-def action_available? action
-  available_actions.include? action.to_sym
-end
-
-def exit_with_error! msg
-  STDERR.puts msg
-  exit 1
-end
-
-def usage
-  "Usage: #{File.basename(__FILE__)} 'Name of my project' [#{available_actions.join('|')}]"
-end
-
-def all action
-  puts('"project","status","last active on","total duration","hourly rate","earnings"') if action == 'csv'
-  Dir[PunchCard::SETTINGS_DIR+'/*'].sort_by{ |f| File.mtime(f) }.reverse.each do |file|
-    puts `ruby #{__FILE__} #{action} '#{File.basename(file)}'`
-  end
-end
-
-if ARGV.first == 'all'
-  all ARGV[1] ? ARGV[1] : 'csv'
-  exit
-elsif ARGV.first && ['-h', '--help', 'help'].include?(ARGV.first)
-  puts usage
-  exit
-end
-
-selected_action = ARGV[0]
-project_name = ARGV[1]
-
-if selected_action
-  if action_available?(selected_action)
-    exit_with_error!("2nd argument has to be the project name, e.g.:\n#{usage}") if !project_name && selected_action != 'list'
-    punch_card = PunchCard.new project_name
-    begin
-      arguments = ARGV.drop(2)
-      if arguments.size > 0
-        puts punch_card.send(selected_action.to_s, *arguments)
-      else
-        puts punch_card.send(selected_action.to_s)
-      end
-    rescue PunchCardError => e
-      exit_with_error! "Error: #{e.message}"
-    end
-  else
-    exit_with_error! "Unrecognized action '#{selected_action || ''}'\n#{usage}"
-  end
 end
