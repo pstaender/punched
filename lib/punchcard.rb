@@ -9,7 +9,7 @@ class PunchCard
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i
   TIME_POINT_PATTERN  = /^(\d+)((\-)(\d+))*$/
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/
-  VERSION             = '0.1.1'
+  VERSION             = '0.1.2'
 
   attr_accessor :project
 

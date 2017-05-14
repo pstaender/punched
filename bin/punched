@@ -20,7 +20,7 @@ def exit_with_error! msg
 end
 
 def usage
-  "Usage: #{File.basename(__FILE__)} 'Name of my project' [#{available_actions.join('|')}]"
+  "Usage: #{File.basename(__FILE__)} #{available_actions.join('|')} 'Name of my project'"
 end
 
 def all action
