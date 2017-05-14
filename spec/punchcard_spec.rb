@@ -64,12 +64,10 @@ describe PunchCard do
   it 'should calculate tracked total time' do
     project      = two_seconds_tracking
     tracked_time = project.details.lines.last.match(/^\d{2}\:\d{2}\:(\d{2}).*total/)[1].to_i
-    expect(tracked_time).to be > 0
-    expect(tracked_time).to be < 4
+    expect(tracked_time).to  be_between 1, 3
     project      = two_seconds_tracking
     tracked_time = project.details.lines.last.match(/^\d{2}\:\d{2}\:(\d{2}).*total/)[1].to_i
-    expect(tracked_time).to be > 2
-    expect(tracked_time).to be < 6
+    expect(tracked_time).to be_between 3, 5
   end
 
   it 'should toggle' do
@@ -118,7 +116,7 @@ describe PunchCard do
     project_a.stop
     sleep 2
     project_b.stop
-    expect(project_b.total.to_i - project_a.total.to_i).to eq(2)
+    expect(project_b.total.to_i - project_a.total.to_i).to be_between(2,3)
   end
 
   it 'should load latest project by wildcard' do
