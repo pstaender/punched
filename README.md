@@ -6,7 +6,6 @@
 ### Requirements
 
   * ruby 2+
-  * unix bash (maybe windows works as well?!?)
 
 ### Install
 
@@ -24,7 +23,7 @@
 
 #### Wildcard
 
-Save keystrokes by using wildcard. The last active project, which matches the pattern (case insensitive) will be selected:
+Save keystrokes by using wildcard. The first last active project, which matches the pattern (case insensitive) will be selected:
 
 ```sh
   $ punched start "Punch*"
@@ -89,6 +88,14 @@ Toggle between start and stop:
   $ punched remove "Punchcard (programming)"
 ```
 
+#### Help
+
+List all available actions:
+
+```sh
+  $ punched help
+    Usage: punched csv|details|remove|rename|set|start|status|stop|toggle|total 'Name of my project'
+```
 
 #### List all projects with total time in CSV format
 

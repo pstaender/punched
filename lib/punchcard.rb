@@ -9,7 +9,7 @@ class PunchCard
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i
   TIME_POINT_PATTERN  = /^(\d+)((\-)(\d+))*$/
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/
-  VERSION             = '0.1.2'
+  VERSION             = '0.1.3'
 
   attr_accessor :project
 
@@ -273,7 +273,7 @@ class PunchCard
   end
 
   def write_to_project_file!
-    timestamps      = project_data.select { |line| line.match(/^\d+/) }
+    timestamps      = project_data.select { |line| line.match(TIME_POINT_PATTERN) }
     meta_data_lines = @meta_data.map { |key, value| "#{key}: #{value}" }
     write_string_to_project_file! [@project, meta_data_lines.join("\n"), timestamps].reject(&:empty?).join("\n")
   end

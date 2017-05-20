@@ -7,7 +7,7 @@ require 'punchcard'
 #
 
 def available_actions
-  PunchCard.new(nil).public_methods(false).reject { |item| item.to_s.end_with?('=') }.sort
+  PunchCard.new(nil).public_methods(false).reject { |item| item.to_s.end_with?('=') || item.to_s == 'project' }.sort
 end
 
 def action_available? action
