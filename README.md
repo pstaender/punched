@@ -1,7 +1,7 @@
 # Punchcard
 ## Minimal time tracking tool for cli
 
-[![Build Status](https://travis-ci.org/pstaender/punchcard.svg?branch=master)](https://travis-ci.org/pstaender/punchcard)
+[![Build Status](https://travis-ci.org/pstaender/punched.svg?branch=master)](https://travis-ci.org/pstaender/punched)
 
 ### Requirements
 
