@@ -1,4 +1,6 @@
-# (c) 2017 by philipp staender
+# (c) 2017-2018 by philipp staender
+
+require 'date'
 
 class PunchCardError < StandardError;
 end
@@ -9,7 +11,7 @@ class PunchCard
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i
   TIME_POINT_PATTERN  = /^(\d+)((\-)(\d+))*$/
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/
-  VERSION             = '0.1.3'
+  VERSION             = '0.2.0'
 
   attr_accessor :project
 
@@ -87,18 +89,20 @@ class PunchCard
     project_exists_or_stop!
     find_or_make_file
     durations = []
+    last_activity = nil
     project_data.map do |line|
       points = line_to_time_points(line)
       if points
         starttime = points[0]
         endtime   = points[1] || timestamp
+        last_activity = points[1] || points[0]
         durations.push duration(starttime, endtime)
       end
     end
     '"'+[
         @project,
         running_status,
-        self.class.format_time(File.ctime(project_file)),
+        last_activity ? self.class.format_time(Time.at(last_activity).to_datetime) : '',
         humanized_total,
         hourly_rate ? hourly_rate[:hourlyRate].to_s + " #{hourly_rate[:currency]}" : '',
         hourly_rate ? (hourly_rate[:hourlyRate] * total / 3600.0).round(2).to_s + " #{hourly_rate[:currency]}" : '',

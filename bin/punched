@@ -24,10 +24,19 @@ def usage
 end
 
 def all action
-  puts('"project","status","last active on","total duration","hourly rate","earnings"') if action == 'csv'
-  Dir[PunchCard::SETTINGS_DIR+'/*'].sort_by { |f| File.mtime(f) }.reverse.each do |file|
-    puts `ruby #{__FILE__} #{action} '#{File.basename(file)}'`
-  end
+  require 'csv'
+  require 'date'
+  puts ["project","status","last active on","total duration","hourly rate","earnings"].to_csv if action == 'csv'
+  puts Dir[PunchCard::SETTINGS_DIR+'/*'].map { |file|
+    data = CSV.parse(`ruby #{__FILE__} #{action} '#{File.basename(file)}'`).first
+    last_activity = !data[2].empty? ? DateTime.parse(data[2]).to_time.to_i : 0
+    data.push(last_activity)
+    data
+  }.sort { |a, b|
+    a.last <=> b.last
+  }.reverse.map { |row|
+    row[0...-1]
+  }.map(&:to_csv).join
 end
 
 if ARGV.first == 'all'
