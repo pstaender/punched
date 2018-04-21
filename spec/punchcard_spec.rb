@@ -116,7 +116,7 @@ describe PunchCard do
     project_a.stop
     sleep 2
     project_b.stop
-    expect(project_b.total.to_i - project_a.total.to_i).to be_between(2,3)
+    expect(project_b.total.to_i - project_a.total.to_i).to be_between(2,4)
   end
 
   it 'should load latest project by wildcard' do
