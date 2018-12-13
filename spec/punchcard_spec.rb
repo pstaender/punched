@@ -55,10 +55,10 @@ describe PunchCard do
   end
 
   it 'should track a project time' do
-    timestamp = Time.now.to_i
+    timestamp = Time.now
     start_and_stop
     expect(my_project_file.lines.first.strip).to eq('My Project')
-    expect(my_project_file.lines.last.strip).to match('^'+timestamp.to_s[0..-3]+'\\d{2}\\-'+timestamp.to_s[0..-3]+'\\d{2}+$')
+    expect(my_project_file.lines.last.strip).to eq("#{timestamp} - #{timestamp}")
   end
 
   it 'should calculate tracked total time' do
