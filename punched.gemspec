@@ -15,6 +15,6 @@ Gem::Specification.new do |s|
   s.default_executable    = 'punched'
   s.rubyforge_project     = 'punched'
   s.require_paths         = ["lib"]
-  s.required_ruby_version = '>= 2.0'
+  s.required_ruby_version = '>= 2.1'
   s.files                 = `git ls-files`.split("\n")
 end
