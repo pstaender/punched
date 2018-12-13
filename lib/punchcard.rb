@@ -1,17 +1,18 @@
 # (c) 2017-2018 by philipp staender
 
 require 'date'
+require 'time'
 
-class PunchCardError < StandardError;
+class PunchCardError < StandardError
 end
 
 class PunchCard
 
   SETTINGS_DIR        = ENV['PUNCHCARD_DIR'] || File.expand_path('~/.punchcard')
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i
-  TIME_POINT_PATTERN  = /^(\d+)((\-)(\d+))*$/
+  TIME_POINT_PATTERN  = /^((\d+|.+?\s[\+\-]\d{4}?\s*)(\-)*(\d+|\s.+\d?)*)$/
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/
-  VERSION             = '0.2.0'
+  VERSION             = '1.0.0'
 
   attr_accessor :project
 
@@ -220,11 +221,11 @@ class PunchCard
   end
 
   def start_time= time
-    append_new_line time
+    append_new_line timestamp_to_time(time)
   end
 
   def end_time= time
-    replace_last_line "#{start_time}-#{time}"
+    replace_last_line "#{timestamp_to_time(start_time)} - #{timestamp_to_time(time)}"
   end
 
   def end_time
@@ -237,7 +238,23 @@ class PunchCard
 
   def line_to_time_points line
     matches = line.match(TIME_POINT_PATTERN)
-    matches ? [matches[1].to_i, matches[4] ? matches[4].to_i : nil] : nil
+    
+    time_points = matches ? [string_to_timestamp(matches[2]), string_to_timestamp(matches[4])] : nil
+    if time_points && time_points.reject(&:nil?).empty?
+      nil
+    else
+      time_points
+    end
+
+  end
+
+  def string_to_timestamp(str)
+    return str if str.nil?
+    str.strip!
+    # This is some legacy... previous versions stored timestamp,
+    # but now punched stores date-time strings for better readability.
+    # So we have to convert timestamp and date-time format into timestamp here
+    str =~ /^\d+$/ ? str.to_i : (str =~ /^\d{4}\-\d/ ? Time.parse(str).to_i : nil)
   end
 
   def last_entry
@@ -246,6 +263,10 @@ class PunchCard
 
   def timestamp
     Time.now.to_i
+  end
+
+  def timestamp_to_time(timestamp)
+    Time.at(timestamp)
   end
 
   def read_project_data

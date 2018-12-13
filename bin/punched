@@ -1,13 +1,17 @@
 #!/usr/bin/env ruby
 $:.push File.expand_path("../lib", __FILE__)
+
 require 'punchcard'
+require 'csv'
+require 'markdown-tables'
+require 'date'
 
 #
 # CLI Wrapper
 #
 
 def available_actions
-  PunchCard.new(nil).public_methods(false).reject { |item| item.to_s.end_with?('=') || item.to_s == 'project' }.sort
+  PunchCard.new(nil).public_methods(false).reject { |item| item.to_s.end_with?('=') || item.to_s == 'project' }.concat([:all]).sort
 end
 
 def action_available? action
@@ -24,11 +28,13 @@ def usage
 end
 
 def all action
-  require 'csv'
-  require 'date'
-  puts ["project","status","last active on","total duration","hourly rate","earnings"].to_csv if action == 'csv'
-  puts Dir[PunchCard::SETTINGS_DIR+'/*'].map { |file|
-    data = CSV.parse(`ruby #{__FILE__} #{action} '#{File.basename(file)}'`).first
+  available_formats = %w(csv plain md)
+  unless available_formats.include?(action)
+    raise "Format #{action} is not supported. Possible formats are: #{available_formats.join(',')}"
+  end
+  labels = ["project","status","last active on","total duration","hourly rate","earnings"]
+  data = Dir[PunchCard::SETTINGS_DIR+'/*'].map { |file|
+    data = CSV.parse(`ruby #{__FILE__} csv '#{File.basename(file)}'`).first
     last_activity = !data[2].empty? ? DateTime.parse(data[2]).to_time.to_i : 0
     data.push(last_activity)
     data
@@ -36,11 +42,22 @@ def all action
     a.last <=> b.last
   }.reverse.map { |row|
     row[0...-1]
-  }.map(&:to_csv).join
+  }
+
+  case action
+  when 'md'
+    puts MarkdownTables.make_table(labels, data, is_rows: true, align: ['l'])
+  when 'csv'
+    puts labels.to_csv
+    puts data.map(&:to_csv).join
+  when 'plain'
+    table = MarkdownTables.make_table(labels, data, is_rows: true, align: ['l'])
+    puts MarkdownTables.plain_text(table)
+  end
 end
 
 if ARGV.first == 'all'
-  all ARGV[1] ? ARGV[1] : 'csv'
+  all ARGV[1] || 'plain'
   exit
 elsif ARGV.first && ['-h', '--help', 'help'].include?(ARGV.first)
   puts usage
