@@ -240,7 +240,7 @@ class PunchCard
     matches = line.match(TIME_POINT_PATTERN)
     
     time_points = matches ? [string_to_timestamp(matches[2]), string_to_timestamp(matches[4])] : nil
-    if time_points&.reject(&:nil?)&.empty?
+    if time_points && time_points.reject(&:nil?).empty?
       nil
     else
       time_points
