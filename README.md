@@ -94,31 +94,35 @@ List all available actions:
 
 ```sh
   $ punched help
-    Usage: punched csv|details|remove|rename|set|start|status|stop|toggle|total 'Name of my project'
+    Usage: punched all|csv|details|remove|rename|set|start|status|stop|toggle|total 'Name of my project'
 ```
 
-#### List all projects with total time in CSV format
+#### List all projects with total time
 
 ```sh
   $ punched all
 
+    |========================================|=========|=====================|================|=============|==========|
+    | project                                | status  |   last active on    | total duration | hourly rate | earnings |
+    |========================================|=========|=====================|================|=============|==========|
+    | Website                                | stopped | 2017-05-07 15:50:00 |    00:04:40    | 95.0 €      | 380.00 € |
+    |----------------------------------------|---------|---------------------|----------------|-------------|----------|
+    | Punchcard (programming)                | stopped | 2017-07-11 12:47:42 |    01:10:04    |             |          |
+    |========================================|=========|=====================|================|=============|==========|
+
+```
+
+To use `md` or `csv` as output format:
+
+```sh
+  $ punched all csv
+
     "project","status","last active on","total duration","hourly rate","earnings"
-    "Website","stopped","2017-05-07 15:50:00","04:06:00","250.0 €","1025.00 €"
+    "Website","stopped","2017-05-07 15:50:00","04:06:00","95.0 €","380.00 €"
     "Punchcard (programming)","stopped","2017-07-11 12:47:42","01:10:04","",""
 ```
 
 You can use `all` with any other action as well, e.g. `punched all stop` to stop all running projects.
-
-Hint: Use your favorite output formatter to get a nicer project summary of your choice; e.g. with [csv2md](https://www.npmjs.com/package/csv2md):
-
-```sh
-  $ punched all | csv2md --pretty
-
-    | project                   | status  | last active on      | total duration | hourly rate | earnings |
-    |---------------------------|---------|---------------------|----------------|-------------|----------|
-    | Website                   | stopped | 2017-05-07 15:50:00 | 04:06:00       | 250.0 €     | 1025.0 € |
-    | Punchcard (programming)   | stopped | 2017-05-07 12:47:42 | 01:10:04       |             |          |
-```
 
 ### Store projects files in a custom folder and sync them between computers
 
