@@ -17,4 +17,6 @@ Gem::Specification.new do |s|
   s.require_paths         = ["lib"]
   s.required_ruby_version = '>= 2.1'
   s.files                 = `git ls-files`.split("\n")
+  
+  s.add_dependency 'markdown-tables', '~> 1.0.2'
 end
