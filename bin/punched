@@ -44,6 +44,8 @@ def all action
     row[0...-1]
   }
 
+  return puts('No record(s) so far') if data.empty?
+
   case action
   when 'md'
     puts MarkdownTables.make_table(labels, data, is_rows: true, align: ['l'])
