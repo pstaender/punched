@@ -1,10 +1,12 @@
 #!/usr/bin/env ruby
-$:.push File.expand_path("../lib", __FILE__)
+$LOAD_PATH.push File.expand_path('lib', __dir__)
 
 require 'punchcard'
 require 'csv'
 require 'markdown-tables'
 require 'date'
+
+class UnknownActionError < StandardError; end
 
 #
 # CLI Wrapper
@@ -14,11 +16,11 @@ def available_actions
   PunchCard.new(nil).public_methods(false).reject { |item| item.to_s.end_with?('=') || item.to_s == 'project' }.concat([:all]).sort
 end
 
-def action_available? action
+def action_available?(action)
   available_actions.include? action.to_sym
 end
 
-def exit_with_error! msg
+def exit_with_error!(msg)
   STDERR.puts msg
   exit 1
 end
@@ -27,22 +29,21 @@ def usage
   "Usage: #{File.basename(__FILE__)} #{available_actions.join('|')} 'Name of my project'"
 end
 
-def all action
-  available_formats = %w(csv plain md)
+def all(action)
+  available_formats = %w[csv plain md]
   unless available_formats.include?(action)
     raise "Format #{action} is not supported. Possible formats are: #{available_formats.join(',')}"
   end
-  labels = ["project","status","last active on","total duration","hourly rate","earnings"]
-  data = Dir[PunchCard::SETTINGS_DIR+'/*'].map { |file|
-    data = CSV.parse(`ruby #{__FILE__} csv '#{File.basename(file)}'`).first
+
+  labels = ['project', 'status', 'last active on', 'total duration', 'hourly rate', 'earnings']
+  data = Dir[PunchCard::SETTINGS_DIR + '/*'].map do |file|
+    data = CSV.parse(call_punchcard('csv', File.basename(file)))[0]
     last_activity = !data[2].empty? ? DateTime.parse(data[2]).to_time.to_i : 0
     data.push(last_activity)
     data
-  }.sort { |a, b|
-    a.last <=> b.last
-  }.reverse.map { |row|
+  end.sort_by(&:last).reverse.map do |row|
     row[0...-1]
-  }
+  end
 
   return puts('No record(s) so far') if data.empty?
 
@@ -58,11 +59,29 @@ def all action
   end
 end
 
-if ARGV.first == 'all'
-  all ARGV[1] || 'plain'
-  exit
-elsif ARGV.first && ['-h', '--help', 'help'].include?(ARGV.first)
-  puts usage
+def call_punchcard(selected_action, project_name)
+  if action_available?(selected_action)
+    if !project_name && selected_action != 'list'
+      exit_with_error!("2nd argument has to be the project name, e.g.:\n#{usage}")
+    end
+    punch_card = PunchCard.new project_name
+    begin
+      arguments = ARGV.drop(2)
+      if !arguments.empty?
+        return punch_card.send(selected_action.to_s, *arguments)
+      else
+        return punch_card.send(selected_action.to_s)
+      end
+    rescue PunchCardError => e
+      exit_with_error! "Error: #{e.message}"
+    end
+  else
+    exit_with_error! "Unrecognized action '#{selected_action || ''}'\n#{usage}"
+  end
+end
+
+if ['-h', '--help', 'help'].include?(ARGV.first)
+  puts(usage)
   exit
 end
 
@@ -70,20 +89,15 @@ selected_action = ARGV[0]
 project_name    = ARGV[1]
 
 if selected_action
-  if action_available?(selected_action)
-    exit_with_error!("2nd argument has to be the project name, e.g.:\n#{usage}") if !project_name && selected_action != 'list'
-    punch_card = PunchCard.new project_name
-    begin
-      arguments = ARGV.drop(2)
-      if arguments.size > 0
-        puts punch_card.send(selected_action.to_s, *arguments)
-      else
-        puts punch_card.send(selected_action.to_s)
-      end
-    rescue PunchCardError => e
-      exit_with_error! "Error: #{e.message}"
+  begin
+    if selected_action == 'all'
+      all(ARGV[1] || 'plain')
+    else
+      puts call_punchcard(selected_action, project_name)
     end
-  else
+  rescue PunchCardError => e
+    exit_with_error! "Error: #{e.message}"
+  rescue UnknownActionError => e
     exit_with_error! "Unrecognized action '#{selected_action || ''}'\n#{usage}"
   end
 end
