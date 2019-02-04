@@ -3,6 +3,8 @@
 
 [![Build Status](https://img.shields.io/travis/pstaender/punched.svg?branch=v1.0.0&style=flat-square)](https://travis-ci.org/pstaender/punched)
 
+[![asciicast](https://asciinema.org/a/222572.svg)](https://asciinema.org/a/222572)
+
 ### Requirements
 
   * ruby 2.1+
