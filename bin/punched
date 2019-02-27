@@ -50,11 +50,11 @@ def all(action)
   end
 
   labels = ['project', 'status', 'last active on', 'total duration', 'hourly rate', 'earnings']
-  data = Dir[PunchCard::SETTINGS_DIR + '/*'].map do |file|
-    data = CSV.parse(call_punchcard('csv', File.basename(file)))[0]
-    last_activity = !data[2].empty? ? DateTime.parse(data[2]).to_time.to_i : 0
-    data.push(last_activity)
-    data
+  data = call_punchcards_by_pattern('*', 'csv').map do |csv_string|
+    csv_data = CSV.parse(csv_string)[0]
+    last_activity = !csv_data[2].empty? ? DateTime.parse(csv_data[2]).to_time.to_i : 0
+    csv_data.push(last_activity)
+    csv_data
   end.sort_by(&:last).reverse.map do |row|
     row[0...-1]
   end
@@ -129,6 +129,6 @@ if selected_action
   rescue PunchCardError => e
     exit_with_error! "Error: #{e.message}"
   rescue UnknownActionError => e
-    exit_with_error! "Unrecognized action '#{selected_action || ''}'\n#{usage}"
+    exit_with_error! "Unrecognized action '#{selected_action || e.message}'\n#{usage}"
   end
 end
