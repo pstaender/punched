@@ -96,8 +96,8 @@ end
 
 def call_punchcards_by_pattern(pattern, action)
   Dir["#{PunchCard::SETTINGS_DIR}/#{pattern}"].map do |file|
-    title = File.basename(file)
-    call_punchcard(action, title)
+    project_name = File.basename(file)
+    call_punchcard(action, project_name)
   end
 end
 
