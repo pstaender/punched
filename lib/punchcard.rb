@@ -11,7 +11,7 @@ class PunchCard
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i.freeze
   TIME_POINT_PATTERN  = /^((\d+|.+?\s[\+\-]\d{4}?\s*)(\-)*(\d+|\s.+\d?)*)$/.freeze
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/.freeze
-  VERSION             = '1.1.0'.freeze
+  VERSION             = '1.1.1'.freeze
 
   attr_accessor :project
 
@@ -167,6 +167,21 @@ class PunchCard
     datetime.strftime('%F %T')
   end
 
+  def self.humanize_duration(duration)
+    hours   = duration / (60 * 60)
+    minutes = (duration / 60) % 60
+    seconds = duration % 60
+    "#{decimal_digits(hours)}:#{decimal_digits(minutes)}:#{decimal_digits(seconds)}"
+  end
+
+  def self.decimal_digits(digit)
+    if digit.to_i < 10
+      "0#{digit}"
+    else
+      digit.to_s
+    end
+  end
+
   private
 
   def hourly_rate
@@ -192,29 +207,14 @@ class PunchCard
   end
 
   def humanized_total
-    humanize_duration total
+    self.class.humanize_duration total
   end
 
   def duration(starttime, endtime)
     if starttime
-      humanize_duration endtime - starttime
+      self.class.humanize_duration endtime - starttime
     else
-      humanize_duration 0
-    end
-  end
-
-  def humanize_duration(duration)
-    hours   = duration / (60 * 60)
-    minutes = (duration / 60) % 60
-    seconds = duration % 60
-    "#{decimal_digits(hours)}:#{decimal_digits(minutes)}:#{decimal_digits(seconds)}"
-  end
-
-  def decimal_digits(digit)
-    if digit.to_i < 10
-      "0#{digit}"
-    else
-      digit.to_s
+      self.class.humanize_duration 0
     end
   end
 

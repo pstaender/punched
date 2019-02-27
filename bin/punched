@@ -1,7 +1,14 @@
 #!/usr/bin/env ruby
-$LOAD_PATH.push File.expand_path('lib', __dir__)
+# frozen_string_literal: true
 
-require 'punchcard.rb'
+THIS_FILE = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
+
+begin
+  require File.expand_path(File.dirname(THIS_FILE) + '/../lib/punchcard')
+rescue LoadError
+  require 'punchcard'
+end
+
 require 'csv'
 require 'markdown-tables'
 require 'date'
@@ -14,7 +21,13 @@ class UnknownActionError < StandardError; end
 #
 
 def available_actions
-  PunchCard.new(nil).public_methods(false).reject { |item| item.to_s.end_with?('=') || item.to_s == 'project' }.concat([:all]).sort
+  PunchCard.new(nil).public_methods(false).reject { |item|
+    item.to_s.end_with?('=') || item.to_s == 'project'
+  }.concat(global_available_actions).sort
+end
+
+def global_available_actions
+  [:all, :totalsum]
 end
 
 def action_available?(action)
@@ -37,11 +50,11 @@ def all(action)
   end
 
   labels = ['project', 'status', 'last active on', 'total duration', 'hourly rate', 'earnings']
-  data = Dir[PunchCard::SETTINGS_DIR + '/*'].map do |file|
-    data = CSV.parse(call_punchcard('csv', File.basename(file)))[0]
-    last_activity = !data[2].empty? ? DateTime.parse(data[2]).to_time.to_i : 0
-    data.push(last_activity)
-    data
+  data = call_punchcards_by_pattern('*', 'csv').map do |csv_string|
+    csv_data = CSV.parse(csv_string)[0]
+    last_activity = !csv_data[2].empty? ? DateTime.parse(csv_data[2]).to_time.to_i : 0
+    csv_data.push(last_activity)
+    csv_data
   end.sort_by(&:last).reverse.map do |row|
     row[0...-1]
   end
@@ -81,6 +94,13 @@ def call_punchcard(selected_action, project_name)
   end
 end
 
+def call_punchcards_by_pattern(pattern, action)
+  Dir["#{PunchCard::SETTINGS_DIR}/#{pattern}"].map do |file|
+    project_name = File.basename(file)
+    call_punchcard(action, project_name)
+  end
+end
+
 if ['-h', '--help', 'help'].include?(ARGV.first)
   puts(usage)
   exit
@@ -93,6 +113,11 @@ if selected_action
   begin
     if selected_action == 'all'
       all(ARGV[1] || 'plain')
+    elsif selected_action == 'totalsum'
+      pattern = ARGV[1] || '*'
+      puts PunchCard.humanize_duration(
+        call_punchcards_by_pattern(pattern, 'total').reduce(&:+)
+      )
     else
       result = call_punchcard(selected_action, project_name)
       if result.is_a?(Hash)
@@ -104,6 +129,6 @@ if selected_action
   rescue PunchCardError => e
     exit_with_error! "Error: #{e.message}"
   rescue UnknownActionError => e
-    exit_with_error! "Unrecognized action '#{selected_action || ''}'\n#{usage}"
+    exit_with_error! "Unrecognized action '#{selected_action || e.message}'\n#{usage}"
   end
 end
