@@ -1,7 +1,14 @@
 #!/usr/bin/env ruby
-$LOAD_PATH.push File.expand_path('lib', __dir__)
+# frozen_string_literal: true
 
-require 'punchcard.rb'
+THIS_FILE = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
+
+begin
+  require File.expand_path(File.dirname(THIS_FILE) + '/../lib/punchcard')
+rescue LoadError
+  require 'punchcard'
+end
+
 require 'csv'
 require 'markdown-tables'
 require 'date'
@@ -14,7 +21,13 @@ class UnknownActionError < StandardError; end
 #
 
 def available_actions
-  PunchCard.new(nil).public_methods(false).reject { |item| item.to_s.end_with?('=') || item.to_s == 'project' }.concat([:all]).sort
+  PunchCard.new(nil).public_methods(false).reject { |item|
+    item.to_s.end_with?('=') || item.to_s == 'project'
+  }.concat(global_available_actions).sort
+end
+
+def global_available_actions
+  [:all, :totalsum]
 end
 
 def action_available?(action)
@@ -81,6 +94,13 @@ def call_punchcard(selected_action, project_name)
   end
 end
 
+def call_punchcards_by_pattern(pattern, action)
+  Dir["#{PunchCard::SETTINGS_DIR}/#{pattern}"].map do |file|
+    title = File.basename(file)
+    call_punchcard(action, title)
+  end
+end
+
 if ['-h', '--help', 'help'].include?(ARGV.first)
   puts(usage)
   exit
@@ -93,6 +113,11 @@ if selected_action
   begin
     if selected_action == 'all'
       all(ARGV[1] || 'plain')
+    elsif selected_action == 'totalsum'
+      pattern = ARGV[1] || '*'
+      puts PunchCard.humanize_duration(
+        call_punchcards_by_pattern(pattern, 'total').reduce(&:+)
+      )
     else
       result = call_punchcard(selected_action, project_name)
       if result.is_a?(Hash)
