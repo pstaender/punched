@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # (c) 2017-2019 by Philipp Staender
 
 require 'date'
@@ -11,7 +12,7 @@ class PunchCard
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i.freeze
   TIME_POINT_PATTERN  = /^((\d+|.+?\s[\+\-]\d{4}?\s*)(\-)*(\d+|\s.+\d?)*)$/.freeze
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/.freeze
-  VERSION             = '1.1.1'.freeze
+  VERSION             = '1.2.0'.freeze
 
   attr_accessor :project
 
@@ -168,6 +169,8 @@ class PunchCard
   end
 
   def self.humanize_duration(duration)
+    return nil unless duration
+
     hours   = duration / (60 * 60)
     minutes = (duration / 60) % 60
     seconds = duration % 60
