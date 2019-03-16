@@ -113,6 +113,13 @@ def call_punchcards_by_pattern(pattern, action)
   found
 end
 
+def validate_project_name_and_stop_if_invalid(project_name)
+  if project_name.strip.strip.start_with?('.')
+    STDERR.puts "Error: project name's are not allowed to start with '.'"
+    exit 1
+  end
+end
+
 if ['-h', '--help', 'help'].include?(ARGV.first)
   puts(usage)
   exit
@@ -133,6 +140,7 @@ if selected_action
         call_punchcards_by_pattern(pattern, 'total').reduce(&:+)
       )
     else
+      validate_project_name_and_stop_if_invalid(project_name)
       result = call_punchcard(
         selected_action: selected_action,
         project_name: project_name,
