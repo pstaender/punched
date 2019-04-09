@@ -17,49 +17,45 @@
 
 ### Usage
 
-#### Start Project
+#### Start and stop a Project
 
 ```sh
-  $ punched start "Punchcard (programming)"
+  $ punched toggle punchcard_programming
+  'punchcard_programming' started (00:00:00 total)
 ```
+
+To stop:
+
+```sh
+  $ punched toggle punchcard_programming
+  'punchcard_programming' stopped (00:01:25 total)
+```
+
+To be more explicit, you can also use `start` and `stop` instead of `toggle`.
 
 #### Wildcard
 
-Save keystrokes by using wildcard. The first last active project, which matches the pattern (case insensitive) will be selected:
+Save keystrokes by using wildcard. The first last active project, which matches the (case insensitive) pattern will be selected:
 
 ```sh
-  $ punched start "Punch*"
-```
-
-#### Stop Project
-
-```sh
-  $ punched stop "Punch*"
-```
-
-#### Toggle
-
-Toggle between start and stop:
-
-```sh
-  $ punched toggle "Punch*"
+  $ punched toggle 'punched*'
 ```
 
 #### Status
 
 ```sh
-  $ punched status "Punch*"
+  $ punched status punched_programming
 
-    Punchcard (programming)
+    punched_programming
     01:10:09
 ```
 
 #### List details
 
 ```sh
-  $ punched details "Punch*"
+  $ punched details punched_programming
 
-    Punchcard (programming) (stopped)
+    punched_programming (stopped)
 
     00:00:08	2017-05-07 08:16:06 - 2017-05-07 08:16:14
     00:04:35	2017-05-07 08:22:02 - 2017-05-07 08:26:37
@@ -71,23 +67,31 @@ Toggle between start and stop:
 #### Set Hourly Rate
 
 ```sh
-  $ punched set "Punch*" hourlyRate 250€
+  $ punched set punched_programming hourlyRate 250€
+  {"hourlyRate":"250€"}
 ```
 
-#### Total time in seconds
+#### Sum spended time on project(s)
+
+`total` returns the total spend time in seconds:
 
 ```sh
-  $ punched total "Punch*"
+  $ punched total punched_programming
+  13505
 ```
 
-#### Rename and delete Project
+`totalsum` calculates human readable spended time on project(s):
 
 ```sh
-  $ punched rename "Old Title" "New Title"
+  $ punched totalsum punched_programming
+  02:05:06
 ```
 
+Use wildcard to sum many projects:
+
 ```sh
-  $ punched remove "Punchcard (programming)"
+  $ punched totalsum 'punched*'
+  12:11:38
 ```
 
 #### Help
@@ -107,9 +111,9 @@ List all available actions:
     |========================================|=========|=====================|================|=============|==========|
     | project                                | status  |   last active on    | total duration | hourly rate | earnings |
     |========================================|=========|=====================|================|=============|==========|
-    | Website                                | stopped | 2017-05-07 15:50:00 |    00:04:40    | 95.0 €      | 380.00 € |
+    | website                                | stopped | 2017-05-07 15:50:00 |    00:04:40    | 95.0 €      | 380.00 € |
     |----------------------------------------|---------|---------------------|----------------|-------------|----------|
-    | Punchcard (programming)                | stopped | 2017-07-11 12:47:42 |    01:10:04    |             |          |
+    | punchcard_programming                  | stopped | 2017-07-11 12:47:42 |    01:10:04    |             |          |
     |========================================|=========|=====================|================|=============|==========|
 
 ```
