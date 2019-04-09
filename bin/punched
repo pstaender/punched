@@ -21,13 +21,13 @@ class UnknownActionError < StandardError; end
 #
 
 def available_actions
-  PunchCard.new(nil).public_methods(false).reject { |item|
+  PunchCard.new(nil).public_methods(false).reject do |item|
     item.to_s.end_with?('=') || item.to_s == 'project'
-  }.concat(global_available_actions).sort
+  end.concat(global_available_actions).sort
 end
 
 def global_available_actions
-  [:all, :totalsum]
+  %i[all totalsum]
 end
 
 def action_available?(action)
@@ -43,33 +43,46 @@ def usage
   "Usage: #{File.basename(__FILE__)} #{available_actions.join('|')} 'Name of my project'"
 end
 
-def all(action)
-  available_formats = %w[csv plain md]
-  unless available_formats.include?(action)
-    raise "Format #{action} is not supported. Possible formats are: #{available_formats.join(',')}"
-  end
-
-  labels = ['project', 'status', 'last active on', 'total duration', 'hourly rate', 'earnings']
+def list_all_projects(format)
   data = call_punchcards_by_pattern('*', 'csv').map do |csv_string|
     csv_data = CSV.parse(csv_string)[0]
-    last_activity = !csv_data[2].empty? ? DateTime.parse(csv_data[2]).to_time.to_i : 0
+    last_activity = !csv_data[2].empty? ? Time.parse(csv_data[2]).to_i : 0
     csv_data.push(last_activity)
     csv_data
-  end.sort_by(&:last).reverse.map do |row|
-    row[0...-1]
-  end
-
+  end.sort_by(&:last).reverse.map { |row| row[0...-1] }
   return puts('No record(s) so far') if data.empty?
 
-  case action
+  puts convert_project_data(format, data)
+end
+
+def convert_project_data(format, data)
+  labels = [
+    'project',
+    'status',
+    'last active on',
+    'total duration',
+    'hourly rate',
+    'earnings'
+  ]
+  case format
   when 'md'
-    puts MarkdownTables.make_table(labels, data, is_rows: true, align: ['l'])
+    MarkdownTables.make_table(labels, data, is_rows: true, align: ['l'])
   when 'csv'
-    puts labels.to_csv
-    puts data.map(&:to_csv).join
+    "#{labels.to_csv}\n#{data.map(&:to_csv).join}"
   when 'plain'
     table = MarkdownTables.make_table(labels, data, is_rows: true, align: ['l'])
-    puts MarkdownTables.plain_text(table)
+    MarkdownTables.plain_text(table)
+  end
+end
+
+def all(action)
+  available_formats = %w[csv plain md]
+  if available_formats.include?(action)
+    list_all_projects(action)
+  elsif action_available?(action)
+    puts call_punchcards_by_pattern('*', action).to_a.join("\n")
+  else
+    raise ArgumentError, "format / action '#{action}' is not supported\nPossible formats are: #{available_formats.join(',')}\nPossible actions are: #{available_actions.join(',')}"
   end
 end
 
@@ -126,6 +139,8 @@ if selected_action
         puts result
       end
     end
+  rescue ArgumentError => e
+    exit_with_error! "Argument Error: #{e.message}"
   rescue PunchCardError => e
     exit_with_error! "Error: #{e.message}"
   rescue UnknownActionError => e
