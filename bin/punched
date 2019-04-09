@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+
 THIS_FILE = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
 
 begin
@@ -15,7 +16,7 @@ require 'date'
 require 'json'
 
 class UnknownActionError < StandardError; end
-
+class InvalidAllArgument < StandardError; end
 #
 # CLI Wrapper
 #
@@ -49,21 +50,16 @@ def list_all_projects(format)
     last_activity = !csv_data[2].empty? ? Time.parse(csv_data[2]).to_i : 0
     csv_data.push(last_activity)
     csv_data
-  end.sort_by(&:last).reverse.map { |row| row[0...-1] }
+  end.sort_by(&:last).reverse.map do |row|
+    row[0...-1]
+  end
   return puts('No record(s) so far') if data.empty?
 
   puts convert_project_data(format, data)
 end
 
 def convert_project_data(format, data)
-  labels = [
-    'project',
-    'status',
-    'last active on',
-    'total duration',
-    'hourly rate',
-    'earnings'
-  ]
+  labels = ['project', 'status', 'last active on', 'total duration', 'hourly rate', 'earnings']
   case format
   when 'md'
     MarkdownTables.make_table(labels, data, is_rows: true, align: ['l'])
@@ -82,7 +78,8 @@ def all(action)
   elsif action_available?(action)
     puts call_punchcards_by_pattern('*', action).to_a.join("\n")
   else
-    raise ArgumentError, "format / action '#{action}' is not supported\nPossible formats are: #{available_formats.join(',')}\nPossible actions are: #{available_actions.join(',')}"
+    suppurted_arguments = (available_formats + available_actions).reject {|n| n.to_s == 'all' }.uniq
+    raise InvalidAllArgument, "'#{action}' is not supported\nSupported formats and actions: #{suppurted_arguments.join(',')}"
   end
 end
 
@@ -139,8 +136,8 @@ if selected_action
         puts result
       end
     end
-  rescue ArgumentError => e
-    exit_with_error! "Argument Error: #{e.message}"
+  rescue InvalidAllArgument => e
+    exit_with_error! e.message
   rescue PunchCardError => e
     exit_with_error! "Error: #{e.message}"
   rescue UnknownActionError => e
