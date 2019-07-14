@@ -11,7 +11,6 @@ Gem::Specification.new do |s|
   s.description           = 'Minimal time tracking tool for cli'
   s.license               = 'GPL-3.0'
   s.executables           = ['punched']
-  s.rubyforge_project     = 'punched'
   s.require_paths         = ['lib']
   s.required_ruby_version = '>= 2.1'
   s.files                 = `git ls-files`.split("\n")
