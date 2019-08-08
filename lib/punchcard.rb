@@ -11,7 +11,7 @@ class PunchCard
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i.freeze
   TIME_POINT_PATTERN  = /^((\d+|.+?\s[\+\-]\d{4}?\s*)(\-)*(\d+|\s.+\d?)*)$/.freeze
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/.freeze
-  VERSION             = '1.1.1'.freeze
+  VERSION             = '1.2.0'.freeze
 
   attr_accessor :title
 
@@ -265,9 +265,9 @@ class PunchCard
     return str if str.nil?
 
     str.strip!
-    # This is some legacy... previous versions stored timestamp,
+    # here some legacy… previous versions stored timestamp,
     # but now punched stores date-time strings for better readability.
-    # So we have to convert timestamp and date-time format into timestamp here
+    # So we have to convert timestamp and date-time format into timestamp
     str =~ /^\d+$/ ? str.to_i : (str =~ /^\d{4}\-\d/ ? Time.parse(str).to_i : nil)
   end
 
