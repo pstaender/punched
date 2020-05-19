@@ -90,7 +90,7 @@ class PunchCard
     output.join("\n")
   end
 
-  def csv
+  def csv(start_at: nil, end_at: nil)
     project_exists_or_stop!
     find_or_make_file
     durations = []
@@ -101,14 +101,21 @@ class PunchCard
 
       starttime = points[0]
       endtime   = points[1] || timestamp
+
+      next if start_at && start_at.to_time.to_i >= starttime
+      next if end_at && end_at.to_time.to_i <= endtime
+
       last_activity = points[1] || points[0]
-      durations.push duration(starttime, endtime)
+      durations.push endtime - starttime
     end
+    total_duration = self.class.humanize_duration(
+      durations.reduce(&:+) || 0
+    )
     '"' + [
       @project,
       running_status,
       last_activity ? self.class.format_time(Time.at(last_activity).to_datetime) : '',
-      humanized_total,
+      total_duration,
       hourly_rate ? hourly_rate[:hourlyRate].to_s + " #{hourly_rate[:currency]}" : '',
       hourly_rate ? (hourly_rate[:hourlyRate] * total / 3600.0).round(2).to_s + " #{hourly_rate[:currency]}" : ''
     ].join('","') + '"'
@@ -151,7 +158,7 @@ class PunchCard
     @meta_data
   end
 
-  def total
+  def total(start_at: nil, end_at: nil)
     total = 0
     project_data.map do |line|
       points = line_to_time_points(line)
@@ -159,6 +166,10 @@ class PunchCard
 
       starttime = points[0]
       endtime   = points[1] || timestamp
+
+      next if start_at && start_at.to_time.to_i >= starttime
+      next if end_at && end_at.to_time.to_i <= endtime
+
       total += endtime - starttime
     end
     total

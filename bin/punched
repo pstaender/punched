@@ -1,11 +1,12 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require('byebug')
 
 THIS_FILE = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
-
 begin
-  require File.expand_path(File.dirname(THIS_FILE) + '/../lib/punchcard')
+  # require File.expand_path(File.dirname(THIS_FILE) + '/../lib/punchcard')
+  require '/Users/philipp/code/punched/lib/punchcard.rb'
 rescue LoadError
   require 'punchcard'
 end
@@ -92,6 +93,8 @@ def call_punchcard(selected_action:, project_name:, arguments:)
     begin
       if arguments.nil? || arguments.empty?
         return punch_card.send(selected_action.to_s)
+      elsif arguments.is_a?(Hash)
+        return punch_card.send(selected_action.to_s, arguments)
       else
         return punch_card.send(selected_action.to_s, *arguments)
       end
@@ -103,11 +106,28 @@ def call_punchcard(selected_action:, project_name:, arguments:)
   end
 end
 
+def cli_argument_by_name(name)
+  value = ARGV.filter { |arg| arg.start_with?("--#{name}=") }&.first
+  value = value.split('=')[1] unless value.nil?
+  if block_given? && !value.nil? && !value.empty?
+    yield value
+  else
+    value
+  end
+end
+
 def call_punchcards_by_pattern(pattern, action)
   path_patterns = [
     "#{PunchCard::SETTINGS_DIR}/#{pattern}*",
     "#{PunchCard::SETTINGS_DIR}/*#{pattern}*"
   ]
+  arguments = {}
+  if %w(csv plain md total).include?(action)
+    arguments = {
+      start_at: cli_argument_by_name('startAt') { |v| Date.parse(v) },
+      end_at: cli_argument_by_name('endAt') { |v| Date.parse(v) }
+    }
+  end
   found = []
   path_patterns.each do |path_pattern|
     found = Dir[path_pattern].map do |file|
@@ -115,7 +135,7 @@ def call_punchcards_by_pattern(pattern, action)
       call_punchcard(
         selected_action: action,
         project_name: project_name,
-        arguments: nil
+        arguments: arguments
       )
     end
     break if found.any?
@@ -143,9 +163,8 @@ if selected_action
     if selected_action == 'all'
       all(ARGV[1] || 'plain')
     elsif selected_action == 'totalsum'
-      last_arguments = ARGV.slice(1, ARGV.size)
-      pattern = last_arguments.empty? ? '*' : last_arguments.join('*')
-      #puts pattern.inspect
+      pattern_argument = ARGV.slice(1)
+      pattern = !pattern_argument || pattern_argument.empty? || pattern_argument.start_with?('--') ? '*' : pattern_argument
       puts PunchCard.humanize_duration(
         call_punchcards_by_pattern(pattern, 'total').reduce(&:+)
       )
@@ -154,7 +173,7 @@ if selected_action
       result = call_punchcard(
         selected_action: selected_action,
         project_name: project_name,
-        arguments:ARGV.drop(2)
+        arguments: ARGV.drop(2)
       )
       if result.is_a?(Hash)
         puts result.to_json
