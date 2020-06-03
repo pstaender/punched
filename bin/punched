@@ -92,11 +92,11 @@ def call_punchcard(selected_action:, project_name:, arguments:)
     punch_card = PunchCard.new project_name
     begin
       if arguments.nil? || arguments.empty?
-        return punch_card.send(selected_action.to_s)
+        punch_card.public_send(selected_action.to_s)
       elsif arguments.is_a?(Hash)
-        return punch_card.send(selected_action.to_s, arguments)
+        punch_card.public_send(selected_action.to_s, arguments)
       else
-        return punch_card.send(selected_action.to_s, *arguments)
+        punch_card.public_send(selected_action.to_s, *arguments)
       end
     rescue PunchCardError => e
       exit_with_error! "Error: #{e.message}"

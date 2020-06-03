@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # (c) 2017-2019 by Philipp Staender
 
 require 'date'
@@ -12,7 +13,7 @@ class PunchCard
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i.freeze
   TIME_POINT_PATTERN  = /^((\d+|.+?\s[\+\-]\d{4}?\s*)(\-)*(\d+|\s.+\d?)*)$/.freeze
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/.freeze
-  VERSION             = '1.2.0'.freeze
+  VERSION             = '1.2.0'
 
   attr_accessor :project
 
@@ -99,14 +100,18 @@ class PunchCard
       points = line_to_time_points(line)
       next unless points
 
-      starttime = points[0]
-      endtime   = points[1] || timestamp
+      start_time = points[0]
+      end_time   = points[1] || timestamp
 
-      next if start_at && start_at.to_time.to_i >= starttime
-      next if end_at && end_at.to_time.to_i <= endtime
+      next if skip_because_time_range_is_excluded_by_filter?(
+        start_at: start_at,
+        end_at: end_at,
+        start_time: start_time,
+        end_time: end_time
+      )
 
       last_activity = points[1] || points[0]
-      durations.push endtime - starttime
+      durations.push end_time - start_time
     end
     total_duration = self.class.humanize_duration(
       durations.reduce(&:+) || 0
@@ -151,7 +156,9 @@ class PunchCard
   end
 
   def set(key, value)
-    raise PunchCardError, "Key '#{key}' can only be alphanumeric" unless key =~ /^[a-zA-Z0-9]+$/
+    unless key =~ /^[a-zA-Z0-9]+$/
+      raise PunchCardError, "Key '#{key}' can only be alphanumeric"
+    end
 
     @meta_data[key.to_sym] = value
     write_to_project_file!
@@ -164,13 +171,17 @@ class PunchCard
       points = line_to_time_points(line)
       next unless points
 
-      starttime = points[0]
-      endtime   = points[1] || timestamp
+      start_time = points[0]
+      end_time   = points[1] || timestamp
 
-      next if start_at && start_at.to_time.to_i >= starttime
-      next if end_at && end_at.to_time.to_i <= endtime
+      next if skip_because_time_range_is_excluded_by_filter?(
+        start_at: start_at,
+        end_at: end_at,
+        start_time: start_time,
+        end_time: end_time
+      )
 
-      total += endtime - starttime
+      total += end_time - start_time
     end
     total
   end
@@ -199,7 +210,7 @@ class PunchCard
   private
 
   def hourly_rate
-    hourly_rate_found = @meta_data[:hourlyRate] && @meta_data[:hourlyRate].match(HOURLY_RATE_PATTERN)
+    hourly_rate_found = @meta_data[:hourlyRate]&.match(HOURLY_RATE_PATTERN)
     return unless hourly_rate_found
 
     {
@@ -224,9 +235,9 @@ class PunchCard
     self.class.humanize_duration total
   end
 
-  def duration(starttime, endtime)
-    if starttime
-      self.class.humanize_duration endtime - starttime
+  def duration(start_time, end_time)
+    if start_time
+      self.class.humanize_duration end_time - start_time
     else
       self.class.humanize_duration 0
     end
@@ -256,7 +267,7 @@ class PunchCard
     matches = line.match(TIME_POINT_PATTERN)
 
     time_points = matches ? [string_to_timestamp(matches[2]), string_to_timestamp(matches[4])] : nil
-    if time_points && time_points.reject(&:nil?).empty?
+    if time_points&.reject(&:nil?)&.empty?
       nil
     else
       time_points
@@ -351,5 +362,9 @@ class PunchCard
 
   def sanitize_filename(name)
     name.downcase.gsub(%r{(\\|/)}, '').gsub(/[^0-9a-z.\-]/, '_')
+  end
+
+  def skip_because_time_range_is_excluded_by_filter?(start_time:, end_time:, start_at: nil, end_at: nil)
+    start_at && start_at.to_time.to_i >= start_time || end_at && end_at.to_time.to_i <= end_time
   end
 end

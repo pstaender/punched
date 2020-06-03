@@ -64,6 +64,15 @@ Save keystrokes by using wildcard. The first last active project, which matches 
     01:10:04	(total)
 ```
 
+#### Filtering
+
+You can filter your spend time with `startsAt` and `endsAt`:
+
+```sh
+  $ punched totalsum myproject --startsAt=15.05.2020
+  $ punched totalsum myproject --startsAt=15.05.2020 --endsAt=30.05.2020
+```
+
 #### Set Hourly Rate
 
 ```sh
@@ -80,18 +89,18 @@ Save keystrokes by using wildcard. The first last active project, which matches 
   13505
 ```
 
-`totalsum` calculates human readable spended time on project(s):
+`totalsum` calculates human readable spended time on project(s) (wildcard is used by default):
 
 ```sh
   $ punched totalsum punched_programming
   02:05:06
 ```
 
-Use wildcard to sum many projects:
+Use `startAt` and/or `endAt` to set a time range:
 
 ```sh
-  $ punched totalsum 'punched*'
-  12:11:38
+  $ punched totalsum punched_programming --startAt=2020-05-01 --endAt=2020-05-03
+  01:02:36
 ```
 
 #### Help
@@ -118,7 +127,7 @@ List all available actions:
 
 ```
 
-To use `md` or `csv` as output format:
+To use `plain`, `md` or `csv` as output format:
 
 ```sh
   $ punched all csv
@@ -129,6 +138,8 @@ To use `md` or `csv` as output format:
 ```
 
 You can use `all` with any other action as well, e.g. `punched all stop` to stop all running projects.
+
+Here you can also filter your spend time with `startAt` and `endAt`, respectively.
 
 ### Store projects files in a custom folder and sync them between computers
 
