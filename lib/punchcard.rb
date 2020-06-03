@@ -103,7 +103,7 @@ class PunchCard
       start_time = points[0]
       end_time   = points[1] || timestamp
 
-      next if skip_because_time_range_is_excluded_by_filter?(
+      next if time_range_is_excluded_by_filter?(
         start_at: start_at,
         end_at: end_at,
         start_time: start_time,
@@ -174,7 +174,7 @@ class PunchCard
       start_time = points[0]
       end_time   = points[1] || timestamp
 
-      next if skip_because_time_range_is_excluded_by_filter?(
+      next if time_range_is_excluded_by_filter?(
         start_at: start_at,
         end_at: end_at,
         start_time: start_time,
@@ -364,7 +364,7 @@ class PunchCard
     name.downcase.gsub(%r{(\\|/)}, '').gsub(/[^0-9a-z.\-]/, '_')
   end
 
-  def skip_because_time_range_is_excluded_by_filter?(start_time:, end_time:, start_at: nil, end_at: nil)
+  def time_range_is_excluded_by_filter?(start_time:, end_time:, start_at: nil, end_at: nil)
     start_at && start_at.to_time.to_i >= start_time || end_at && end_at.to_time.to_i <= end_time
   end
 end
