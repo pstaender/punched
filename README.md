@@ -66,11 +66,12 @@ Save keystrokes by using wildcard. The first last active project, which matches 
 
 #### Filtering
 
-You can filter your spend time with `startsAt` and `endsAt`:
+You can filter your spend time with `startAt` and `endAt`:
 
 ```sh
-  $ punched totalsum myproject --startsAt=15.05.2020
-  $ punched totalsum myproject --startsAt=15.05.2020 --endsAt=30.05.2020
+  $ punched totalsum myproject --startAt=15.05.2020
+  $ punched totalsum myproject --startAt=15.05.2020 --endAt=30.05.2020
+  $ punched all plain --startAt=15.05.2020 --endAt=30.05.2020
 ```
 
 #### Set Hourly Rate

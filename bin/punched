@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require('byebug')
-
 THIS_FILE = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
 begin
   # require File.expand_path(File.dirname(THIS_FILE) + '/../lib/punchcard')
@@ -94,7 +92,6 @@ def call_punchcard(selected_action:, project_name:, arguments:)
       if arguments.nil? || arguments.empty?
         punch_card.public_send(selected_action.to_s)
       elsif arguments.is_a?(Hash)
-        raise 'ok'
         punch_card.public_send(selected_action.to_s, arguments)
       else
         punch_card.public_send(selected_action.to_s, *arguments)
