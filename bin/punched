@@ -3,7 +3,7 @@
 
 THIS_FILE = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
 begin
-  require File.expand_path(File.dirname(THIS_FILE) + '/../lib/punchcard')
+  require File.expand_path(File.dirname(THIS_FILE) + '/../lib/punchcard.rb')
 rescue LoadError
   require 'punchcard'
 end
