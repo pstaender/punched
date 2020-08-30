@@ -91,7 +91,7 @@ def call_punchcard(selected_action:, project_name:, arguments:)
       if arguments.nil? || arguments.empty?
         punch_card.public_send(selected_action.to_s)
       elsif arguments.is_a?(Hash)
-        punch_card.public_send(selected_action.to_s, arguments)
+        punch_card.public_send(selected_action.to_s, **arguments)
       else
         punch_card.public_send(selected_action.to_s, *arguments)
       end
