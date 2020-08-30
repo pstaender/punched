@@ -15,7 +15,7 @@ def setup_example_settings_dir
 end
 
 def punched_bin
-  "PUNCHCARD_DIR=#{example_settings_dir} #{Dir.pwd}/../../bin/punched"
+  "PUNCHCARD_DIR=#{example_settings_dir} #{Dir.pwd}/bin/punched"
 end
 
 describe PunchCard do
