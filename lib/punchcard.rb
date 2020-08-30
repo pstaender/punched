@@ -14,7 +14,7 @@ class PunchCard
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/.freeze
   VERSION             = '1.2.0'.freeze
 
-  attr_accessor :project
+  attr_accessor :title
 
   def initialize(project_name)
     @wilcard_for_filename = ''
@@ -30,10 +30,10 @@ class PunchCard
   def start
     output = []
     if start_time && !end_time
-      output << "'#{project}' already started (#{humanized_total} total)"
+      output << "'#{title_or_project}' already started (#{humanized_total} total)"
       output << duration(start_time, timestamp).to_s
     else
-      output << "'#{project}' started (#{humanized_total} total)"
+      output << "'#{title_or_project}' started (#{humanized_total} total)"
       self.start_time = timestamp
     end
     output.join("\n")
@@ -42,9 +42,9 @@ class PunchCard
   def stop
     output = []
     if end_time
-      output << "'#{@project}' already stopped (#{humanized_total} total)"
+      output << "'#{title_or_project}' already stopped (#{humanized_total} total)"
     elsif start_time
-      output << "'#{@project}' stopped (#{humanized_total} total)"
+      output << "'#{title_or_project}' stopped (#{humanized_total} total)"
       self.end_time = timestamp
     else
       output << 'Nothing to stop'
@@ -60,11 +60,23 @@ class PunchCard
     end
   end
 
+  def title_or_project
+    title || project
+  end
+
+  def title_and_project
+    if title != project
+      "#{title} [#{project}]"
+    else
+      project
+    end
+  end
+
   def status
     project_exists_or_stop!
     find_or_make_file
     output = []
-    output << (project + " (#{running_status})\n")
+    output << (title_or_project + " (#{running_status})\n")
     output << humanized_total
     output.join("\n")
   end
@@ -105,7 +117,7 @@ class PunchCard
       durations.push duration(starttime, endtime)
     end
     '"' + [
-      @project,
+      title_and_project,
       running_status,
       last_activity ? self.class.format_time(Time.at(last_activity).to_datetime) : '',
       humanized_total,
@@ -256,9 +268,9 @@ class PunchCard
     return str if str.nil?
 
     str.strip!
-    # This is some legacy... previous versions stored timestamp,
+    # here some legacy… previous versions stored timestamp,
     # but now punched stores date-time strings for better readability.
-    # So we have to convert timestamp and date-time format into timestamp here
+    # So we have to convert timestamp and date-time format into timestamp
     str =~ /^\d+$/ ? str.to_i : (str =~ /^\d{4}\-\d/ ? Time.parse(str).to_i : nil)
   end
 
@@ -289,7 +301,8 @@ class PunchCard
       end
       i += 1
     end
-    @project = title if title
+    @project = File.basename(project_file)
+    self.title = title
     timestamps
   end
 
@@ -331,7 +344,7 @@ class PunchCard
 
   def find_or_make_file
     write_string_to_project_file!(@project + "\n") unless project_exist?
-    @project = project_data.first
+    self.title ||= project_data.first
   end
 
   def find_or_make_settings_dir
