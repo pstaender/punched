@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 $LOAD_PATH.push File.expand_path('lib', __dir__)
 
 require 'punchcard'
@@ -11,6 +12,10 @@ def setup_example_settings_dir
   Dir.glob(example_settings_dir + '/*').each { |file| File.delete(file) }
   PunchCard.send(:remove_const, :SETTINGS_DIR)
   PunchCard.const_set(:SETTINGS_DIR, example_settings_dir)
+end
+
+def punched_bin
+  "PUNCHCARD_DIR=#{example_settings_dir} ../../bin/punched"
 end
 
 describe PunchCard do
@@ -86,6 +91,13 @@ describe PunchCard do
     expect(project.project).to eq('playing_mot_rhead')
   end
 
+  xit 'should read and write utf8 names' do
+    PunchCard.new 'Playing Motörhead'
+    expect(my_project_file('playing_mot_rhead').strip).to eq('Playing Motörhead')
+    project = PunchCard.new 'Playing*'
+    expect(project.project).to eq('Playing Motörhead')
+  end
+
   it 'should set hourlyRate' do
     project = start_and_stop
     project.set 'hourlyRate', '1000 €'
@@ -149,5 +161,11 @@ describe PunchCard do
     expect(File.exist?("#{example_settings_dir}/my_project")).to be_truthy
     project.remove
     expect(File.exist?("#{example_settings_dir}/my_project")).to be_falsey
+  end
+
+  it 'should call punched all' do
+    two_seconds_tracking
+    result = `#{punched_bin} all`
+    expect(result).to match('My Project')
   end
 end
