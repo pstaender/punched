@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # (c) 2017-2019 by Philipp Staender
 
 require 'date'
@@ -12,9 +13,9 @@ class PunchCard
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i.freeze
   TIME_POINT_PATTERN  = /^((\d+|.+?\s[\+\-]\d{4}?\s*)(\-)*(\d+|\s.+\d?)*)$/.freeze
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/.freeze
-  VERSION             = '1.2.0'.freeze
+  VERSION             = '1.3.0'
 
-  attr_accessor :project
+  attr_accessor :title
 
   def initialize(project_name)
     @wilcard_for_filename = ''
@@ -30,10 +31,10 @@ class PunchCard
   def start
     output = []
     if start_time && !end_time
-      output << "'#{project}' already started (#{humanized_total} total)"
+      output << "'#{title_or_project}' already started (#{humanized_total} total)"
       output << duration(start_time, timestamp).to_s
     else
-      output << "'#{project}' started (#{humanized_total} total)"
+      output << "'#{title_or_project}' started (#{humanized_total} total)"
       self.start_time = timestamp
     end
     output.join("\n")
@@ -42,9 +43,9 @@ class PunchCard
   def stop
     output = []
     if end_time
-      output << "'#{@project}' already stopped (#{humanized_total} total)"
+      output << "'#{title_or_project}' already stopped (#{humanized_total} total)"
     elsif start_time
-      output << "'#{@project}' stopped (#{humanized_total} total)"
+      output << "'#{title_or_project}' stopped (#{humanized_total} total)"
       self.end_time = timestamp
     else
       output << 'Nothing to stop'
@@ -60,11 +61,23 @@ class PunchCard
     end
   end
 
+  def title_or_project
+    title || project
+  end
+
+  def title_and_project
+    if title != project
+      "#{title} [#{project}]"
+    else
+      project
+    end
+  end
+
   def status
     project_exists_or_stop!
     find_or_make_file
     output = []
-    output << (project + " (#{running_status})\n")
+    output << (title_or_project + " (#{running_status})\n")
     output << humanized_total
     output.join("\n")
   end
@@ -90,7 +103,7 @@ class PunchCard
     output.join("\n")
   end
 
-  def csv
+  def csv(start_at: nil, end_at: nil)
     project_exists_or_stop!
     find_or_make_file
     durations = []
@@ -99,16 +112,27 @@ class PunchCard
       points = line_to_time_points(line)
       next unless points
 
-      starttime = points[0]
-      endtime   = points[1] || timestamp
+      start_time = points[0]
+      end_time   = points[1] || timestamp
+
+      next if time_range_is_excluded_by_filter?(
+        start_at: start_at,
+        end_at: end_at,
+        start_time: start_time,
+        end_time: end_time
+      )
+
       last_activity = points[1] || points[0]
-      durations.push duration(starttime, endtime)
+      durations.push end_time - start_time
     end
+    total_duration = self.class.humanize_duration(
+      durations.reduce(&:+) || 0
+    )
     '"' + [
-      @project,
+      title_and_project,
       running_status,
       last_activity ? self.class.format_time(Time.at(last_activity).to_datetime) : '',
-      humanized_total,
+      total_duration,
       hourly_rate ? hourly_rate[:hourlyRate].to_s + " #{hourly_rate[:currency]}" : '',
       hourly_rate ? (hourly_rate[:hourlyRate] * total / 3600.0).round(2).to_s + " #{hourly_rate[:currency]}" : ''
     ].join('","') + '"'
@@ -144,22 +168,32 @@ class PunchCard
   end
 
   def set(key, value)
-    raise PunchCardError, "Key '#{key}' can only be alphanumeric" unless key =~ /^[a-zA-Z0-9]+$/
+    unless key =~ /^[a-zA-Z0-9]+$/
+      raise PunchCardError, "Key '#{key}' can only be alphanumeric"
+    end
 
     @meta_data[key.to_sym] = value
     write_to_project_file!
     @meta_data
   end
 
-  def total
+  def total(start_at: nil, end_at: nil)
     total = 0
     project_data.map do |line|
       points = line_to_time_points(line)
       next unless points
 
-      starttime = points[0]
-      endtime   = points[1] || timestamp
-      total += endtime - starttime
+      start_time = points[0]
+      end_time   = points[1] || timestamp
+
+      next if time_range_is_excluded_by_filter?(
+        start_at: start_at,
+        end_at: end_at,
+        start_time: start_time,
+        end_time: end_time
+      )
+
+      total += end_time - start_time
     end
     total
   end
@@ -188,7 +222,7 @@ class PunchCard
   private
 
   def hourly_rate
-    hourly_rate_found = @meta_data[:hourlyRate] && @meta_data[:hourlyRate].match(HOURLY_RATE_PATTERN)
+    hourly_rate_found = @meta_data[:hourlyRate]&.match(HOURLY_RATE_PATTERN)
     return unless hourly_rate_found
 
     {
@@ -213,9 +247,9 @@ class PunchCard
     self.class.humanize_duration total
   end
 
-  def duration(starttime, endtime)
-    if starttime
-      self.class.humanize_duration endtime - starttime
+  def duration(start_time, end_time)
+    if start_time
+      self.class.humanize_duration end_time - start_time
     else
       self.class.humanize_duration 0
     end
@@ -245,7 +279,7 @@ class PunchCard
     matches = line.match(TIME_POINT_PATTERN)
 
     time_points = matches ? [string_to_timestamp(matches[2]), string_to_timestamp(matches[4])] : nil
-    if time_points && time_points.reject(&:nil?).empty?
+    if time_points&.reject(&:nil?)&.empty?
       nil
     else
       time_points
@@ -256,9 +290,9 @@ class PunchCard
     return str if str.nil?
 
     str.strip!
-    # This is some legacy... previous versions stored timestamp,
+    # here some legacy… previous versions stored timestamp,
     # but now punched stores date-time strings for better readability.
-    # So we have to convert timestamp and date-time format into timestamp here
+    # So we have to convert timestamp and date-time format into timestamp
     str =~ /^\d+$/ ? str.to_i : (str =~ /^\d{4}\-\d/ ? Time.parse(str).to_i : nil)
   end
 
@@ -289,7 +323,8 @@ class PunchCard
       end
       i += 1
     end
-    @project = title if title
+    @project = File.basename(project_file)
+    self.title = title
     timestamps
   end
 
@@ -331,7 +366,7 @@ class PunchCard
 
   def find_or_make_file
     write_string_to_project_file!(@project + "\n") unless project_exist?
-    @project = project_data.first
+    self.title ||= project_data.first
   end
 
   def find_or_make_settings_dir
@@ -340,5 +375,9 @@ class PunchCard
 
   def sanitize_filename(name)
     name.downcase.gsub(%r{(\\|/)}, '').gsub(/[^0-9a-z.\-]/, '_')
+  end
+
+  def time_range_is_excluded_by_filter?(start_time:, end_time:, start_at: nil, end_at: nil)
+    start_at && start_at.to_time.to_i >= start_time || end_at && end_at.to_time.to_i <= end_time
   end
 end
