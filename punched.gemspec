@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.license               = 'GPL-3.0'
   s.executables           = ['punched']
   s.require_paths         = ['lib']
-  s.required_ruby_version = '>= 2.1'
+  s.required_ruby_version = '>= 2.6'
   s.files                 = `git ls-files`.split("\n")
 
   s.add_dependency 'markdown-tables', '~> 1.0.2'
