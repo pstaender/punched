@@ -157,6 +157,7 @@ project_name    = ARGV[1]
 
 if selected_action
   begin
+    raise UnknownActionError.new(selected_action) unless action_available?(selected_action)
     if selected_action == 'all'
       all(ARGV[1] || 'plain')
     elsif selected_action == 'totalsum'
@@ -183,6 +184,6 @@ if selected_action
   rescue PunchCardError => e
     exit_with_error! "Error: #{e.message}"
   rescue UnknownActionError => e
-    exit_with_error! "Unrecognized action '#{selected_action || e.message}'\n#{usage}"
+    exit_with_error! "Unknown action '#{e.message}'\n#{usage}"
   end
 end
