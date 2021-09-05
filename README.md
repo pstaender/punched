@@ -150,6 +150,26 @@ By default, PunchCard will store the data in `~/.punchcard/`. Define your custom
   export PUNCHCARD_DIR=~/Nextcloud/punchcard
 ```
 
+### Bash auto complete
+
+It is possible to add an auto completion for punchcard to your bash (tested on zsh so far). Add the following to your `.zshrc` / `.bashrc`:
+
+```bash
+PUNCHCARD_EXEC_PATH=$(which punched)
+
+punchcard_projects () {
+  ls $PUNCHCARD_DIR
+  return 0
+}
+
+[ -f $PUNCHCARD_EXEC_PATH ] && complete -F punchcard_projects $PUNCHCARD_EXEC_PATH
+```
+
+Ensure that the `$PUNCHCARD_DIR` environment variable is also set (see `Store projects files in a custom folder and sync them between computers`).
+
+Now you get a list of your existing projects everytime hitting a tab-key while using `punched`.
+
+In `rvm` the return value of `which punched` will be empty; use rvm to get the absolute path and / or set the path manually.
 
 ### Tests
 
