@@ -1,7 +1,7 @@
 # Punchcard
 ## Minimal time tracking tool for cli
 
-[![Build Status](https://img.shields.io/travis/pstaender/punched.svg?branch=v1.0.0&style=flat-square)](https://travis-ci.org/pstaender/punched)
+![status](https://github.com/pstaender/punched/actions/workflows/specs.yml/badge.svg)
 
 [![asciicast](https://asciinema.org/a/222572.svg)](https://asciinema.org/a/222572)
 

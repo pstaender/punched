@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# (c) 2017-2019 by Philipp Staender
+# (c) 2017-2023 by Philipp Staender
 
 require 'date'
 require 'time'
@@ -108,7 +108,7 @@ class PunchCard
     find_or_make_file
     durations = []
     last_activity = nil
-    project_data.map do |line|
+    project_data_without_comments.map do |line|
       points = line_to_time_points(line)
       next unless points
 
@@ -179,7 +179,7 @@ class PunchCard
 
   def total(start_at: nil, end_at: nil)
     total = 0
-    project_data.map do |line|
+    project_data_without_comments.map do |line|
       points = line_to_time_points(line)
       next unless points
 
@@ -297,7 +297,7 @@ class PunchCard
   end
 
   def last_entry
-    project_data.last
+    project_data_without_comments.last
   end
 
   def timestamp
@@ -309,12 +309,14 @@ class PunchCard
   end
 
   def read_project_data
-    title      = nil
+    title      = File.basename(project_file)
     timestamps = []
     i          = 0
     File.open(project_file, 'r').each_line do |line|
       line.strip!
-      if i.zero?
+      next if line.start_with?('#')
+
+      if i.zero? && !line.match(TIME_POINT_PATTERN)
         title = line
       elsif line.match(META_KEY_PATTERN)
         set line.match(META_KEY_PATTERN)[1], line.match(META_KEY_PATTERN)[2]
@@ -330,6 +332,10 @@ class PunchCard
 
   def project_data
     File.open(project_file).each_line.map(&:strip)
+  end
+
+  def project_data_without_comments
+    project_data.filter { |l| !l.start_with?('#')}
   end
 
   def write_string_to_project_file!(string)

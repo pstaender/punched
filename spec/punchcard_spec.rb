@@ -84,18 +84,18 @@ describe PunchCard do
     expect(my_project_file.lines[-2]).to match(/^\d+/)
   end
 
+  it 'ignores lines starting with #' do
+    start_and_stop
+    File.write("#{example_settings_dir}/my_project", my_project_file + "\n# A comment line")
+    start_and_stop
+    expect(my_project_file).to match("\n# A comment line")
+  end
+
   it 'should convert names to underscore with special characters' do
     PunchCard.new 'Playing Motörhead'
     expect(my_project_file('playing_mot_rhead').strip).to eq('Playing Motörhead')
     project = PunchCard.new 'Playing*'
     expect(project.project).to eq('playing_mot_rhead')
-  end
-
-  xit 'should read and write utf8 names' do
-    PunchCard.new 'Playing Motörhead'
-    expect(my_project_file('playing_mot_rhead').strip).to eq('Playing Motörhead')
-    project = PunchCard.new 'Playing*'
-    expect(project.project).to eq('Playing Motörhead')
   end
 
   it 'should set hourlyRate' do
