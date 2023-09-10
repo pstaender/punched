@@ -46,25 +46,25 @@ describe PunchCard do
     example_project
   end
 
-  it 'should create a new PunchCard object' do
+  it 'creates a new project / PunchCard object' do
     expect(example_project).to be_a(PunchCard)
   end
 
-  it 'should start a project' do
+  it 'starts a project' do
     example_project.start
   end
 
-  it 'should start and stop a project' do
+  it 'starts and stops a project' do
     start_and_stop
   end
 
-  it 'should track a project time' do
+  it 'tracks project time' do
     start_and_stop
     expect(my_project_file.lines.first.strip).to eq('My Project')
     expect(my_project_file.lines.last.strip).to match(/^\d+-\d+-\d+ .+? - \d+-\d+-\d+ /)
   end
 
-  it 'should calculate tracked total time' do
+  it 'calculates tracked total time' do
     project      = two_seconds_tracking
     tracked_time = project.details.lines.last.match(/^\d{2}\:\d{2}\:(\d{2}).*total/)[1].to_i
     expect(tracked_time).to be_between 1, 3
@@ -73,7 +73,7 @@ describe PunchCard do
     expect(tracked_time).to be_between 3, 5
   end
 
-  it 'should toggle' do
+  it 'toggles project status (start + stop)' do
     project = start_and_stop
     expect(project.status.lines.first).to match /stopped/
     project.toggle
@@ -91,20 +91,20 @@ describe PunchCard do
     expect(my_project_file).to match("\n# A comment line")
   end
 
-  it 'should convert names to underscore with special characters' do
+  it 'converts names to underscore with special characters' do
     PunchCard.new 'Playing Motörhead'
     expect(my_project_file('playing_mot_rhead').strip).to eq('Playing Motörhead')
     project = PunchCard.new 'Playing*'
     expect(project.project).to eq('playing_mot_rhead')
   end
 
-  it 'should set hourlyRate' do
+  it 'sets hourlyRate' do
     project = start_and_stop
     project.set 'hourlyRate', '1000 €'
-    expect(my_project_file.lines[1].strip).to eq('hourlyRate: 1000 €')
+    expect(my_project_file.lines.first.chomp).to eq('hourlyRate: 1000 €')
   end
 
-  it 'should calculate earnings' do
+  it 'calculates earnings' do
     project = start_and_stop
     project.set 'hourlyRate', '1000EURO'
     project.toggle
@@ -116,7 +116,7 @@ describe PunchCard do
     expect(project.csv).to match /^"My Project \[my_project\]","stopped","[0-9\-\s\:]+?","[0-9\:]+?","1000.0 EURO","1\.\d+ EURO"$/
   end
 
-  it 'should track different projects simultanously' do
+  it 'tracks different projects simultanously' do
     project_a = random_project
     project_b = random_project
     expect(project_a.project).not_to eq(project_b.project)
@@ -129,7 +129,16 @@ describe PunchCard do
     expect(project_b.total.to_i - project_a.total.to_i).to be_between(2, 4)
   end
 
-  it 'should load latest project by wildcard' do
+  it 'stores title correctly if differs from filename' do
+    project = random_project
+    project.start
+    sleep 2
+    project.stop
+    project = random_project
+    expect(project.title).to start_with('My random Project ')
+  end
+
+  it 'loads latest project by wildcard' do
     project_a = random_project
     project   = PunchCard.new 'My random*'
     expect(project.project).to eq(project_a.project)
@@ -140,7 +149,7 @@ describe PunchCard do
     expect(project.project).not_to eq(project_a.project)
   end
 
-  it 'should rename' do
+  it 'renames project' do
     project = example_project
     content = my_project_file
     project.rename 'Renamed Project'
@@ -156,14 +165,14 @@ describe PunchCard do
     expect(File.exist?("#{example_settings_dir}/renamed_project")).to be_falsey
   end
 
-  it 'should remove' do
+  it 'removes project' do
     project = example_project
     expect(File.exist?("#{example_settings_dir}/my_project")).to be_truthy
     project.remove
     expect(File.exist?("#{example_settings_dir}/my_project")).to be_falsey
   end
 
-  it 'should call punched all' do
+  it 'show all projects' do
     two_seconds_tracking
     result = `#{punched_bin} all`
     expect(result).to match('My Project')
