@@ -13,7 +13,7 @@ class PunchCard
   HOURLY_RATE_PATTERN = /^\s*(\d+)([^\d]+)*\s*/i.freeze
   TIME_POINT_PATTERN  = /^((\d+|.+?\s[\+\-]\d{4}?\s*)(\-)*(\d+|\s.+\d?)*)$/.freeze
   META_KEY_PATTERN    = /^([a-zA-Z0-9]+)\:\s*(.*)$/.freeze
-  VERSION             = '1.3.3'
+  VERSION             = '1.4.0'
 
   attr_accessor :title
 
@@ -149,7 +149,7 @@ class PunchCard
     old_filename = project_filename
     data         = project_data
     data[0]      = new_project_name
-    write_string_to_project_file! data.join("\n")
+    write_string_to_project_file! data.join("\n").chomp
     self.project = new_project_name
     File.rename(old_filename, project_filename) && "#{old_filename} -> #{project_filename}"
   end
@@ -272,7 +272,7 @@ class PunchCard
   end
 
   def time_points
-    line_to_time_points last_entry
+    line_to_time_points(last_entry) if last_entry
   end
 
   def line_to_time_points(line)
@@ -290,10 +290,7 @@ class PunchCard
     return str if str.nil?
 
     str.strip!
-    # here some legacy… previous versions stored timestamp,
-    # but now punched stores date-time strings for better readability.
-    # So we have to convert timestamp and date-time format into timestamp
-    str =~ /^\d+$/ ? str.to_i : (str =~ /^\d{4}\-\d/ ? Time.parse(str).to_i : nil)
+    str =~ /^\d{4}\-\d/ ? Time.parse(str).to_i : nil
   end
 
   def last_entry
@@ -316,7 +313,7 @@ class PunchCard
       line.strip!
       next if line.start_with?('#')
 
-      if i.zero? && !line.match(TIME_POINT_PATTERN)
+      if i.zero? && !line.empty? && !line.match(TIME_POINT_PATTERN)
         title = line
       elsif line.match(META_KEY_PATTERN)
         set line.match(META_KEY_PATTERN)[1], line.match(META_KEY_PATTERN)[2]
@@ -339,17 +336,17 @@ class PunchCard
   end
 
   def write_string_to_project_file!(string)
-    File.open(project_file, 'w') { |f| f.write(string) }
+    File.write(project_file, string ? string.chomp : '')
   end
 
   def write_to_project_file!
     timestamps      = project_data.select { |line| line.match(TIME_POINT_PATTERN) }
     meta_data_lines = @meta_data.map { |key, value| "#{key}: #{value}" }
-    write_string_to_project_file! [@project, meta_data_lines.join("\n"), timestamps].reject(&:empty?).join("\n")
+    write_string_to_project_file! [project_name_if_differs_from_filename || '', meta_data_lines.join("\n"), timestamps].reject(&:empty?).join("\n")
   end
 
   def append_new_line(line)
-    open(project_file, 'a') { |f| f.puts("\n" + line.to_s.strip) }
+    File.open(project_file, 'a') { |f| f.puts("\n#{line.to_s.strip}") }
   end
 
   def replace_last_line(line)
@@ -371,8 +368,12 @@ class PunchCard
   end
 
   def find_or_make_file
-    write_string_to_project_file!(@project + "\n") unless project_exist?
+    write_string_to_project_file!(project_name_if_differs_from_filename) unless project_exist?
     self.title ||= project_data.first
+  end
+
+  def project_name_if_differs_from_filename
+    @project != File.basename(project_file) ? @project : nil
   end
 
   def find_or_make_settings_dir
