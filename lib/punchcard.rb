@@ -121,6 +121,7 @@ class PunchCard
         start_time: start_time,
         end_time: end_time
       )
+      next if start_time.nil? || end_time.nil?
 
       last_activity = points[1] || points[0]
       durations.push end_time - start_time
